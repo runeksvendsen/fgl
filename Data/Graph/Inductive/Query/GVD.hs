@@ -19,7 +19,7 @@ import qualified Data.Graph.Inductive.Internal.Heap as H
 import Data.Graph.Inductive.Basic
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Internal.RootPath
-import Data.Graph.Inductive.Query.SP          (dijkstra)
+import Data.Graph.Inductive.Query.SP          (dijkstra, EdgeWeight)
 
 -- | Representation of a shortest path forest.
 type Voronoi a = LRTree a
@@ -27,14 +27,14 @@ type Voronoi a = LRTree a
 -- | Produce a shortest path forest (the roots of which are those
 --   nodes specified) from nodes in the graph /to/ one of the root
 --   nodes (if possible).
-gvdIn :: (DynGraph gr, Real b) => [Node] -> gr a b -> Voronoi b
+gvdIn :: (DynGraph gr, EdgeWeight b) => [Node] -> gr a b -> Voronoi b
 gvdIn vs g = gvdOut vs (grev g)
 
 -- | Produce a shortest path forest (the roots of which are those
 --   nodes specified) from nodes in the graph /from/ one of the root
 --   nodes (if possible).
-gvdOut :: (Graph gr, Real b) => [Node] -> gr a b -> Voronoi b
-gvdOut vs = dijkstra (H.build (zip (repeat 0) (map (\v->LP [(v,0)]) vs)))
+gvdOut :: (Graph gr, EdgeWeight b) => [Node] -> gr a b -> Voronoi b
+gvdOut vs = dijkstra (H.build (zip (repeat mempty) (map (\v->LP [(v,mempty)]) vs)))
 
 -- | Return the nodes reachable to/from (depending on how the
 --   'Voronoi' was constructed) from the specified root node (if the

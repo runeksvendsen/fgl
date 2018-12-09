@@ -8,21 +8,26 @@ module Data.Graph.Inductive.Query.SP(
     , dijkstra
     , LRTree
     , H.Heap
+    , EdgeWeight
 ) where
 
 import qualified Data.Graph.Inductive.Internal.Heap as H
 
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Internal.RootPath
+import Data.Monoid                                  ((<>))
 
-expand :: (Real b) => b -> LPath b -> Context a b -> [H.Heap b (LPath b)]
-expand d (LP p) (_,_,_,s) = map (\(l,v)->H.unit (l+d) (LP ((v,l+d):p))) s
+class (Ord a, Monoid a) => EdgeWeight a
+
+expand :: (EdgeWeight b) => b -> LPath b -> Context a b -> [H.Heap b (LPath b)]
+expand d (LP p) (_,_,_,s) = map (\(l,v)->H.unit (l<>d) (LP ((v,l<>d):p))) s
+
 
 -- | Dijkstra's shortest path algorithm.
 --
 --   The edge labels of type @b@ are the edge weights; negative edge
 --   weights are not supported.
-dijkstra :: (Graph gr, Real b)
+dijkstra :: (Graph gr, EdgeWeight b)
     => H.Heap b (LPath b) -- ^ Initial heap of known paths and their lengths.
     -> gr a b
     -> LRTree b
@@ -41,11 +46,11 @@ dijkstra h g =
 --
 --   The edge labels of type @b@ are the edge weights; negative edge
 --   weights are not supported.
-spTree :: (Graph gr, Real b)
+spTree :: (Graph gr, EdgeWeight b)
     => Node
     -> gr a b
     -> LRTree b
-spTree v = dijkstra (H.unit 0 (LP [(v,0)]))
+spTree v = dijkstra (H.unit mempty (LP [(v,mempty)]))
 
 -- | Length of the shortest path between two nodes, if any.
 --
@@ -54,7 +59,7 @@ spTree v = dijkstra (H.unit 0 (LP [(v,0)]))
 --
 --   The edge labels of type @b@ are the edge weights; negative edge
 --   weights are not supported.
-spLength :: (Graph gr, Real b)
+spLength :: (Graph gr, EdgeWeight b)
     => Node -- ^ Start
     -> Node -- ^ Destination
     -> gr a b
@@ -68,7 +73,7 @@ spLength s t = getDistance t . spTree s
 --
 --   The edge labels of type @b@ are the edge weights; negative edge
 --   weights are not supported.
-sp :: (Graph gr, Real b)
+sp :: (Graph gr, EdgeWeight b)
     => Node -- ^ Start
     -> Node -- ^ Destination
     -> gr a b
